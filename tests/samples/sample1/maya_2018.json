@@ -1,0 +1,16 @@
+{
+  "MAYA_VERSION": "2018",
+  "MAYA_LOCATION": {
+    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
+    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
+    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
+  },
+  "PATH": {
+    "darwin": "{MAYA_LOCATION}/bin",
+    "linux": "{MAYA_LOCATION}/bin",
+    "windows": "{MAYA_LOCATION}/bin;C:/Program Files/Common Files/Autodesk Shared/;C:/Program Files (x86)/Autodesk/Backburner/"
+  },
+  "DYLD_LIBRARY_PATH": {
+    "darwin": "{MAYA_LOCATION}/MacOS"
+  }
+}
