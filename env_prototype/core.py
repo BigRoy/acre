@@ -47,6 +47,11 @@ def compute(env,
     for key, value in env.items():
         dependent_keys = re.findall("{(.+?)}", value)
         for dependency in dependent_keys:
+            # Ignore direct references to itself because
+            # we don't format with itself anyway
+            if dependency == key:
+                continue
+
             dependencies.append((key, dependency))
 
     result = lib.topological_sort(dependencies)
@@ -62,12 +67,16 @@ def compute(env,
     # Format dynamic values
     for key in reversed(result.sorted):
         if key in env:
-            env[key] = lib.partial_format(env[key], data=env)
+            data = env.copy()
+            data.pop(key)    # format without itself
+            env[key] = lib.partial_format(env[key], data=data)
 
     # Format cyclic values
     for key in result.cyclic:
         if key in env:
-            env[key] = lib.partial_format(env[key], data=env)
+            data = env.copy()
+            data.pop(key)   # format without itself
+            env[key] = lib.partial_format(env[key], data=data)
 
     # Format dynamic keys
     if dynamic_keys:

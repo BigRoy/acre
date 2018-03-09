@@ -118,6 +118,19 @@ class TestDynamicEnvironments(unittest.TestCase):
         # Allow to pass (even if unpredictable result)
         api.compute(data, allow_key_clash=True)
 
+    def test_compute_preserve_reference_to_self(self):
+        """api.compute() does not format key references to itself"""
+
+        data = {
+            "PATH": "{PATH}",
+            "PYTHONPATH": "x;y/{PYTHONPATH}"
+        }
+        data = api.compute(data)
+        self.assertEqual(data, {
+            "PATH": "{PATH}",
+            "PYTHONPATH": "x;y/{PYTHONPATH}"
+        })
+
     def test_append(self):
         """Append paths of two environments into one."""
 
@@ -146,3 +159,50 @@ class TestDynamicEnvironments(unittest.TestCase):
         # Ensure the original dicts are unaltered
         self.assertEqual(data_a, _data_a)
         self.assertEqual(data_b, _data_b)
+
+    def test_merge(self):
+        """api.merge() merges correctly"""
+
+        data = {
+            "A": "a;{A}",
+            "B": "b;c;d",
+            "C": "C"
+        }
+
+        environment = {
+            "A": "A",
+            "C": "D"
+        }
+
+        data = api.merge(data, current_env=environment)
+
+        # Note that C from the environment is not preserved, it's overwritten
+        # by the merge. (To preserve it should have a reference to itself)
+        # See "A"
+        self.assertEqual(data, {
+            "A": "a;A",
+            "B": "b;c;d",
+            "C": "C"
+        })
+
+    def test_merge_formats_references_to_self(self):
+        """api.merge() correctly formats variables references to itself"""
+
+        # Skip when not in current environment
+        data = {
+            "PATH": "a;b;{PATH}",
+        }
+
+        merged = api.merge(data, current_env={})
+        self.assertEqual(merged["PATH"], "a;b;")
+
+        # Allow merge
+        data = {
+            "PATH": "a;b;{PATH}"
+        }
+
+        # Note that on merge the paths are *not* ensured to be unique and
+        # *might* end up in the resulting variable more than once.
+        # This is expected behavior.
+        merged = api.merge(data, current_env={"PATH": "b;c;d"})
+        self.assertEqual(merged["PATH"], "a;b;b;c;d")
