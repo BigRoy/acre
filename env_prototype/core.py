@@ -11,7 +11,6 @@ PLATFORM = platform.system().lower()
 
 logging.basicConfig()
 log = logging.getLogger()
-log.setLevel(logging.DEBUG)
 
 
 class CycleError(ValueError):
