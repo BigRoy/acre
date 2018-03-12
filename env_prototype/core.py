@@ -140,6 +140,10 @@ def parse(env, platform_name=None):
         if not value:
             continue
 
+        # Allow to have lists as values in the tool data
+        if isinstance(value, (list, tuple)):
+            value = ";".join(value)
+
         # Replace all ${envkey} to {envkey} so we can regular python format it.
         keys = re.findall(r'\${.*?}', value)
         for key in keys:
