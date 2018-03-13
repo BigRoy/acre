@@ -206,3 +206,12 @@ class TestDynamicEnvironments(unittest.TestCase):
         # This is expected behavior.
         merged = api.merge(data, current_env={"PATH": "b;c;d"})
         self.assertEqual(merged["PATH"], "a;b;b;c;d")
+
+    def test_merge_preserves_current_env(self):
+        """api.merge() preserves data in original environment"""
+
+        data = {"A": "a"}
+        environment = {"B": "b"}
+        result = api.merge(data, current_env=environment)
+
+        self.assertEqual(result["B"], "b")

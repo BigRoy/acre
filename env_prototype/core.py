@@ -250,9 +250,10 @@ def merge(env, current_env):
 
     """
 
-    env = env.copy()
+    result = current_env.copy()
     for key, value in env.items():
         value = lib.partial_format(value, data=current_env, missing="")
-        env[key] = value
+        result[key] = value
 
-    return env
+    return result
+
