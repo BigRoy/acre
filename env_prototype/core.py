@@ -1,6 +1,5 @@
 import logging
 import json
-import pprint
 import re
 import os
 import platform
@@ -222,12 +221,12 @@ def get_tools(tools, platform_name=None):
                 tool_env = json.load(f)
             log.debug('Read tool successfully: {}'.format(tool_path))
         except IOError:
-            log.debug(
+            log.error(
                 'Unable to find the environment file: "{}"'.format(tool_path)
             )
             continue
         except ValueError as e:
-            log.debug(
+            log.error(
                 'Unable to read the environment file: "{0}", due to:'
                 '\n{1}'.format(tool_path, e)
             )
@@ -286,7 +285,6 @@ def which(program, paths=None):
         for ext in os.getenv("PATHEXT", "").split(os.pathsep):
             fname = program + ext.lower()
             abspath = os.path.join(path.strip('"'), fname)
-
             if is_exe(abspath):
                 return abspath
 
@@ -350,23 +348,3 @@ def execute(executable, args=None, environment=None, cwd=None):
     popen = subprocess.Popen(**kwargs)
 
     return popen
-
-
-def launch(tools, executable, args):
-
-    tools_env = get_tools(tools.split(";"))
-    env = compute(tools_env)
-
-    env = merge(env, current_env=dict(os.environ))
-    print("Environment:\n%s" % pprint.pformat(env, indent=4))
-
-    # Search for the executable within the tool's environment
-    # by temporarily taking on its `PATH` settings
-    paths = env.get("PATH", os.environ.get("PATH", "")).split(os.pathsep)
-    exe = which(executable, paths=paths)
-
-    if not exe:
-        raise ValueError("Unable to find executable: %s" % executable)
-
-    print("Launching: %s" % exe)
-    execute(exe, environment=env, args=args)
