@@ -4,6 +4,8 @@ from .core import (
     compute,
     merge,
     get_tools,
+    which,
+    launch,
 
     CycleError,
     DynamicKeyClashError
@@ -15,6 +17,8 @@ __all__ = [
     "compute",
     "merge",
     "get_tools",
+    "which",
+    "launch",
 
     "CycleError",
     "DynamicKeyClashError"

@@ -1,8 +1,11 @@
 import logging
 import json
+import pprint
 import re
 import os
 import platform
+import subprocess
+import sys
 
 from . import lib
 
@@ -154,7 +157,11 @@ def parse(env, platform_name=None):
 
 
 def append(env, env_b):
-    """Append paths of environment b into environment"""
+    """Append paths of environment b into environment
+
+    Returns:
+        env (dict)
+    """
     # todo: should this be refactored to "join" or "extend"
     # todo: this function name might also be confusing with "merge"
     env = env.copy()
@@ -177,8 +184,8 @@ def get_tools(tools, platform_name=None):
     tool X can rely on variables of tool Y).
 
     Examples:
-        get_environment(["maya2018", "yeti2.01", "mtoa2018"])
-        get_environment(["global", "fusion9", "ofxplugins"])
+        get_tools(["maya2018", "yeti2.01", "mtoa2018"])
+        get_tools(["global", "fusion9", "ofxplugins"])
 
     Args:
         tools (list): List of tool names.
@@ -209,7 +216,7 @@ def get_tools(tools, platform_name=None):
     environment = dict()
     for tool_path in tool_paths:
 
-        # Load tool
+        # Load tool environment
         try:
             with open(tool_path, "r") as f:
                 tool_env = json.load(f)
@@ -257,3 +264,109 @@ def merge(env, current_env):
 
     return result
 
+
+def which(program, paths=None):
+    """Locate `program` in PATH
+
+    Arguments:
+        program (str): Name of program, e.g. "python"
+        paths (list): a list of paths
+
+    """
+
+    def is_exe(fpath):
+        if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+            return True
+        return False
+
+    if paths is None:
+        paths = os.environ["PATH"].split(os.pathsep)
+
+    for path in paths:
+        for ext in os.getenv("PATHEXT", "").split(os.pathsep):
+            fname = program + ext.lower()
+            abspath = os.path.join(path.strip('"'), fname)
+
+            if is_exe(abspath):
+                return abspath
+
+    return None
+
+
+def execute(executable, args=None, environment=None, cwd=None):
+    """Launch a new subprocess of `args`
+
+    Arguments:
+        executable (str): Relative or absolute path to executable
+        args (list): Command passed to `subprocess.Popen`
+        environment (dict, optional): Custom environment passed
+            to Popen instance.
+
+    Returns:
+        Popen instance of newly spawned process
+
+    Exceptions:
+        OSError on internal error
+        ValueError on `executable` not found
+
+    """
+
+    CREATE_NO_WINDOW = 0x08000000
+    CREATE_NEW_CONSOLE = 0x00000010
+    IS_WIN32 = sys.platform == "win32"
+    PY2 = sys.version_info[0] == 2
+
+    abspath = executable
+
+    env = (environment or os.environ)
+
+    if PY2:
+        # Protect against unicode, and other unsupported
+        # types amongst environment variables
+        enc = sys.getfilesystemencoding()
+        env = {k.encode(enc): v.encode(enc) for k, v in env.items()}
+
+    kwargs = dict(
+        args=[abspath] + args or list(),
+        env=env,
+        cwd=cwd,
+
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+
+        # Output `str` through stdout on Python 2 and 3
+        universal_newlines=True,
+    )
+
+    if env.get("CREATE_NEW_CONSOLE"):
+        kwargs["creationflags"] = CREATE_NEW_CONSOLE
+        kwargs.pop("stdout")
+        kwargs.pop("stderr")
+    else:
+
+        if IS_WIN32:
+            kwargs["creationflags"] = CREATE_NO_WINDOW
+
+    popen = subprocess.Popen(**kwargs)
+
+    return popen
+
+
+def launch(tools, executable, args):
+
+    tools_env = get_tools(tools.split(";"))
+    env = compute(tools_env)
+
+    env = merge(env, current_env=dict(os.environ))
+    print("Environment:\n%s" % pprint.pformat(env, indent=4))
+
+    # Search for the executable within the tool's environment
+    # by temporarily taking on its `PATH` settings
+    paths = env.get("PATH", os.environ.get("PATH", "")).split(os.pathsep)
+    exe = which(executable, paths=paths)
+
+    if not exe:
+        raise ValueError("Unable to find executable: %s" % executable)
+
+    print("Launching: %s" % exe)
+    execute(exe, environment=env, args=args)
