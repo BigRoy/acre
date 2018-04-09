@@ -1,5 +1,8 @@
-# env_prototype
-Simple Python dynamic environment prototype
+# Acre
+
+**Acre** is a lightweight cross-platform environment management Python
+package that makes it trivial to launch applications in their own
+configurable working environment.
 
 # Examples
 
@@ -11,7 +14,7 @@ has values that use values from other keys in the environment.
 To compute the result of a dynamic environment use `api.compute`
 
 ```python
-import env_prototype.api as api
+import acre.api as api
 
 data = {
     "MAYA_VERSION": "2018",
@@ -26,7 +29,7 @@ assert env["MAYA_LOCATION"] == "C:/Program Files/Autodesk/Maya2018"
 This also works with recursion.
 
 ```python
-import env_prototype.api as api
+import acre.api as api
 
 data = {
     "MAYA_VERSION": "2018",
@@ -45,7 +48,7 @@ You can set up your data with platform specific paths, by using a
 dictionary. These need to be parsed with `api.parse`
 
 ```python
-import env_prototype.api as api
+import acre.api as api
 
 data = {
     "VERSION": "2018",
@@ -76,7 +79,7 @@ merge it with your environment. So:
 
 ```python
 import os
-import env_prototype.api as api
+import acre.api as api
 
 data = {
     "PIPELINE": {

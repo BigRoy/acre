@@ -1,6 +1,6 @@
 import unittest
 
-import env_prototype.api as api
+import acre.api as api
 
 
 class TestDynamicEnvironments(unittest.TestCase):

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import env_prototype.api as api
+import acre.api as api
 
 
 SAMPLES = os.path.join(os.path.dirname(__file__), "samples")
