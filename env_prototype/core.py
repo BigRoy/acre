@@ -264,12 +264,17 @@ def merge(env, current_env):
     return result
 
 
-def which(program, paths=None):
+def which(program, env):
     """Locate `program` in PATH
+
+    Ensure `PATHEXT` is declared in the environment if you want to alter the
+    priority of the system extensions:
+
+        Example : ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
 
     Arguments:
         program (str): Name of program, e.g. "python"
-        paths (list): a list of paths
+        env (dict): an environment dictionary
 
     """
 
@@ -278,11 +283,11 @@ def which(program, paths=None):
             return True
         return False
 
-    if paths is None:
-        paths = os.environ["PATH"].split(os.pathsep)
+    paths = env["PATH"].split(os.pathsep)
+    extensions = env.get("PATHEXT", os.getenv("PATHEXT", ""))
 
     for path in paths:
-        for ext in os.getenv("PATHEXT", "").split(os.pathsep):
+        for ext in extensions.split(os.pathsep):
             fname = program + ext.lower()
             abspath = os.path.join(path.strip('"'), fname)
             if is_exe(abspath):
@@ -299,6 +304,7 @@ def execute(executable, args=None, environment=None, cwd=None):
         args (list): Command passed to `subprocess.Popen`
         environment (dict, optional): Custom environment passed
             to Popen instance.
+        cwd (str): the current working directory
 
     Returns:
         Popen instance of newly spawned process
