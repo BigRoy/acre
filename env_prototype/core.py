@@ -341,7 +341,6 @@ def execute(executable, args=None, environment=None, cwd=None):
         kwargs.pop("stdout")
         kwargs.pop("stderr")
     else:
-
         if IS_WIN32:
             kwargs["creationflags"] = CREATE_NO_WINDOW
 
