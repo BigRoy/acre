@@ -1,7 +1,7 @@
 import os
 import pprint
 
-from . import get_tools, compute, merge, which, execute
+from . import get_tools, compute, merge, which, launch
 
 
 def launch(tools, executable, args):
@@ -19,7 +19,7 @@ def launch(tools, executable, args):
         raise ValueError("Unable to find executable: %s" % executable)
 
     print("Launching: %s" % exe)
-    execute(exe, environment=env, args=args)
+    launch(exe, environment=env, args=args)
 
 
 if __name__ == '__main__':

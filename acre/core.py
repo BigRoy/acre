@@ -288,7 +288,7 @@ def which(program, env):
     return None
 
 
-def execute(executable, args=None, environment=None, cwd=None):
+def launch(executable, args=None, environment=None, cwd=None):
     """Launch a new subprocess of `args`
 
     Arguments:
