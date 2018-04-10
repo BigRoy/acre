@@ -1,6 +1,6 @@
 import unittest
 
-import env_prototype.api as api
+import acre
 
 
 class TestDynamicEnvironments(unittest.TestCase):
@@ -17,15 +17,15 @@ class TestDynamicEnvironments(unittest.TestCase):
             "B": "universal"
         }
 
-        result = api.parse(data, platform_name="darwin")
+        result = acre.parse(data, platform_name="darwin")
         self.assertEqual(result["A"], data["A"]["darwin"])
         self.assertEqual(result["B"], data["B"])
 
-        result = api.parse(data, platform_name="windows")
+        result = acre.parse(data, platform_name="windows")
         self.assertEqual(result["A"], data["A"]["windows"])
         self.assertEqual(result["B"], data["B"])
 
-        result = api.parse(data, platform_name="linux")
+        result = acre.parse(data, platform_name="linux")
         self.assertEqual(result["A"], data["A"]["linux"])
         self.assertEqual(result["B"], data["B"])
 
@@ -44,7 +44,7 @@ class TestDynamicEnvironments(unittest.TestCase):
             "I": "deep_{H}"
         }
 
-        result = api.compute(data)
+        result = acre.compute(data)
 
         self.assertEqual(result, {
             "A": "bla",
@@ -65,12 +65,12 @@ class TestDynamicEnvironments(unittest.TestCase):
             "Y": "{X}"
         }
 
-        with self.assertRaises(api.CycleError):
-            api.compute(data, allow_cycle=False)
+        with self.assertRaises(acre.CycleError):
+            acre.compute(data, allow_cycle=False)
 
         # If we compute the cycle the result is unknown, it can be either {Y}
         # or {X} for both values so we just check whether are equal
-        result = api.compute(data, allow_cycle=True)
+        result = acre.compute(data, allow_cycle=True)
         self.assertEqual(result["X"], result["Y"])
 
     def test_dynamic_keys(self):
@@ -82,7 +82,7 @@ class TestDynamicEnvironments(unittest.TestCase):
             "{B}": "this is C"
         }
 
-        env = api.compute(data)
+        env = acre.compute(data)
 
         self.assertEqual(env, {
           "A": "D",
@@ -98,11 +98,11 @@ class TestDynamicEnvironments(unittest.TestCase):
             "{foo}": "bar"
         }
 
-        with self.assertRaises(api.DynamicKeyClashError):
-            api.compute(data, allow_key_clash=False)
+        with self.assertRaises(acre.DynamicKeyClashError):
+            acre.compute(data, allow_key_clash=False)
 
         # Allow to pass (even if unpredictable result)
-        api.compute(data, allow_key_clash=True)
+        acre.compute(data, allow_key_clash=True)
 
     def test_dynamic_keys_clash(self):
         """Dynamic key clash captured correctly"""
@@ -112,20 +112,20 @@ class TestDynamicEnvironments(unittest.TestCase):
             "foo": "B"
         }
 
-        with self.assertRaises(api.DynamicKeyClashError):
-            api.compute(data, allow_key_clash=False)
+        with self.assertRaises(acre.DynamicKeyClashError):
+            acre.compute(data, allow_key_clash=False)
 
         # Allow to pass (even if unpredictable result)
-        api.compute(data, allow_key_clash=True)
+        acre.compute(data, allow_key_clash=True)
 
     def test_compute_preserve_reference_to_self(self):
-        """api.compute() does not format key references to itself"""
+        """acre.compute() does not format key references to itself"""
 
         data = {
             "PATH": "{PATH}",
             "PYTHONPATH": "x;y/{PYTHONPATH}"
         }
-        data = api.compute(data)
+        data = acre.compute(data)
         self.assertEqual(data, {
             "PATH": "{PATH}",
             "PYTHONPATH": "x;y/{PYTHONPATH}"
@@ -148,7 +148,7 @@ class TestDynamicEnvironments(unittest.TestCase):
         _data_a = data_a.copy()
         _data_b = data_b.copy()
 
-        data = api.append(data_a, data_b)
+        data = acre.append(data_a, data_b)
 
         self.assertEqual(data, {
             "A": "A;A2",
@@ -161,7 +161,7 @@ class TestDynamicEnvironments(unittest.TestCase):
         self.assertEqual(data_b, _data_b)
 
     def test_merge(self):
-        """api.merge() merges correctly"""
+        """acre.merge() merges correctly"""
 
         data = {
             "A": "a;{A}",
@@ -174,7 +174,7 @@ class TestDynamicEnvironments(unittest.TestCase):
             "C": "D"
         }
 
-        data = api.merge(data, current_env=environment)
+        data = acre.merge(data, current_env=environment)
 
         # Note that C from the environment is not preserved, it's overwritten
         # by the merge. (To preserve it should have a reference to itself)
@@ -186,14 +186,14 @@ class TestDynamicEnvironments(unittest.TestCase):
         })
 
     def test_merge_formats_references_to_self(self):
-        """api.merge() correctly formats variables references to itself"""
+        """acre.merge() correctly formats variables references to itself"""
 
         # Skip when not in current environment
         data = {
             "PATH": "a;b;{PATH}",
         }
 
-        merged = api.merge(data, current_env={})
+        merged = acre.merge(data, current_env={})
         self.assertEqual(merged["PATH"], "a;b;")
 
         # Allow merge
@@ -204,14 +204,14 @@ class TestDynamicEnvironments(unittest.TestCase):
         # Note that on merge the paths are *not* ensured to be unique and
         # *might* end up in the resulting variable more than once.
         # This is expected behavior.
-        merged = api.merge(data, current_env={"PATH": "b;c;d"})
+        merged = acre.merge(data, current_env={"PATH": "b;c;d"})
         self.assertEqual(merged["PATH"], "a;b;b;c;d")
 
     def test_merge_preserves_current_env(self):
-        """api.merge() preserves data in original environment"""
+        """acre.merge() preserves data in original environment"""
 
         data = {"A": "a"}
         environment = {"B": "b"}
-        result = api.merge(data, current_env=environment)
+        result = acre.merge(data, current_env=environment)
 
         self.assertEqual(result["B"], "b")

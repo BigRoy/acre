@@ -115,9 +115,6 @@ def compute(env,
 def parse(env, platform_name=None):
     """Parse environment for platform-specific values
 
-    This currently also refactors ${keys} to {keys} to support Ecosystem
-    formatted variables.
-
     Args:
         env (dict): The source environment to read.
         platform_name (str, Optional): Name of platform to parse for.
@@ -144,11 +141,6 @@ def parse(env, platform_name=None):
         # Allow to have lists as values in the tool data
         if isinstance(value, (list, tuple)):
             value = ";".join(value)
-
-        # Replace all ${envkey} to {envkey} so we can regular python format it.
-        keys = re.findall(r'\${.*?}', value)
-        for key in keys:
-            value = value.replace(key, key[1:])
 
         result[variable] = value
 
