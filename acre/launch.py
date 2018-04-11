@@ -4,7 +4,7 @@ import pprint
 from . import get_tools, compute, merge, which, launch
 
 
-def launch(tools, executable, args):
+def launcher(tools, executable, args):
 
     tools_env = get_tools(tools.split(";"))
     env = compute(tools_env)
@@ -36,4 +36,4 @@ if __name__ == '__main__':
 
     kwargs, args = parser.parse_known_args()
 
-    launch(tools=kwargs.tools, executable=kwargs.executable, args=args)
+    launcher(tools=kwargs.tools, executable=kwargs.executable, args=args)
