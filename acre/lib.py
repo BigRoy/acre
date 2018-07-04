@@ -13,6 +13,12 @@ def uniqify_ordered(seq):
     See: https://stackoverflow.com/questions/480214/how-do-you-remove-
          duplicates-from-a-list-in-whilst-preserving-order
 
+    Args:
+        seq(list): list of values
+
+    Returns:
+        list
+
     """
     seen = set()
     seen_add = seen.add
@@ -46,7 +52,14 @@ def partial_format(s, data, missing="{{{key}}}"):
 
 
 def topological_sort(dependency_pairs):
-    """Sort values subject to dependency constraints"""
+    """Sort values subject to dependency constraints
+
+    Args:
+        dependency_pairs(list): list of pairs, [a, b]
+
+    Returns:
+        namedtuple
+    """
     num_heads = defaultdict(int)  # num arrows pointing in
     tails = defaultdict(list)  # list of arrows going out
     heads = []  # unique list of heads in order first seen
@@ -64,12 +77,24 @@ def topological_sort(dependency_pairs):
             num_heads[t] -= 1
             if not num_heads[t]:
                 ordered.append(t)
+
     cyclic = [n for n, heads in num_heads.items() if heads]
+
     return Results(ordered, cyclic)
 
 
 def append_path(self, key, path):
-    """Append *path* to *key* in *self*."""
+    """Append *path* to *key* in *self*.
+
+    Args:
+        self (dict): environment dictionary
+        key (str): environment variable name
+        path (str): path
+
+    Returns:
+        None
+
+    """
     try:
         if path not in self[key]:
             self[key] = os.pathsep.join([self[key], str(path)])

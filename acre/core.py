@@ -25,11 +25,11 @@ class DynamicKeyClashError(ValueError):
     pass
 
 
-def compute(env,
-            dynamic_keys=True,
-            allow_cycle=False,
-            allow_key_clash=False,
-            cleanup=True):
+def build(env,
+          dynamic_keys=True,
+          allow_cycle=False,
+          allow_key_clash=False,
+          cleanup=True):
     """Compute the result from recursive dynamic environment.
 
     Note: Keys that are not present in the data will remain unformatted as the
@@ -112,7 +112,7 @@ def compute(env,
     return env
 
 
-def parse(env, platform_name=None):
+def prepare(env, platform_name=None):
     """Parse environment for platform-specific values
 
     Args:
@@ -166,11 +166,11 @@ def append(env, env_b):
     return env
 
 
-def get_tools(tools, platform_name=None):
+def discover(tools, platform_name=None):
     """Return combined environment for the given set of tools.
 
-    This will find merge all the required environment variables of the input
-    tools into a single dictionary. Then it will do a recursive format to
+    This will find and merge all the required environment variables of the
+    input tools into a single dictionary. Then it will do a recursive format to
     format all dynamic keys and values using the same dictionary. (So that
     tool X can rely on variables of tool Y).
 
@@ -224,7 +224,7 @@ def get_tools(tools, platform_name=None):
             )
             continue
 
-        tool_env = parse(tool_env, platform_name=platform_name)
+        tool_env = prepare(tool_env, platform_name=platform_name)
         environment = append(environment, tool_env)
 
     return environment
@@ -256,7 +256,7 @@ def merge(env, current_env):
     return result
 
 
-def which(program, env):
+def locate(program, env):
     """Locate `program` in PATH
 
     Ensure `PATHEXT` is declared in the environment if you want to alter the

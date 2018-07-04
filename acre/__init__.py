@@ -1,10 +1,10 @@
 from .core import (
-    parse,
+    prepare,
     append,
-    compute,
+    build,
     merge,
-    get_tools,
-    which,
+    discover,
+    locate,
     launch,
 
     CycleError,
@@ -12,12 +12,12 @@ from .core import (
 )
 
 __all__ = [
-    "parse",
+    "prepare",
     "append",
-    "compute",
+    "build",
     "merge",
-    "get_tools",
-    "which",
+    "discover",
+    "locate",
     "launch",
 
     "CycleError",

@@ -16,7 +16,7 @@ class TestTools(unittest.TestCase):
         """Get tools works"""
 
         self.setup_sample("sample1")
-        env = acre.get_tools(["global"])
+        env = acre.discover(["global"])
 
         self.assertEqual(env, {
             "PIPELINE": "P:/pipeline/dev2_1"
@@ -27,14 +27,14 @@ class TestTools(unittest.TestCase):
 
         self.setup_sample("sample1")
 
-        env = acre.get_tools(["maya_2018"], platform_name="darwin")
+        env = acre.discover(["maya_2018"], platform_name="darwin")
         self.assertEqual(env["PATH"], "{MAYA_LOCATION}/bin")
 
         # Test Mac only path
         self.assertTrue("DYLD_LIBRARY_PATH" in env)
         self.assertEqual(env["DYLD_LIBRARY_PATH"], "{MAYA_LOCATION}/MacOS")
 
-        env = acre.get_tools(["maya_2018"], platform_name="windows")
+        env = acre.discover(["maya_2018"], platform_name="windows")
         self.assertEqual(env["PATH"], ";".join([
             "{MAYA_LOCATION}/bin",
             "C:/Program Files/Common Files/Autodesk Shared/",
@@ -47,9 +47,9 @@ class TestTools(unittest.TestCase):
     def test_compute_tools(self):
 
         self.setup_sample("sample1")
-        env = acre.get_tools(["maya_2018"], platform_name="windows")
+        env = acre.discover(["maya_2018"], platform_name="windows")
 
-        env = acre.compute(env)
+        env = acre.build(env)
         self.assertEqual(env["MAYA_LOCATION"],
                          "C:/Program Files/Autodesk/Maya2018")
 
