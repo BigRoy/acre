@@ -1,25 +1,8 @@
 import os
-import pprint
+import sys
+import time
 
 from . import discover, build, merge, locate, launch
-
-
-def launcher(tools, executable, args):
-
-    tools_env = discover(tools.split(";"))
-    env = build(tools_env)
-
-    env = merge(env, current_env=dict(os.environ))
-    print("Environment:\n%s" % pprint.pformat(env, indent=4))
-
-    # Search for the executable within the tool's environment
-    # by temporarily taking on its `PATH` settings
-    exe = locate(executable, env)
-    if not exe:
-        raise ValueError("Unable to find executable: %s" % executable)
-
-    print("Launching: %s" % exe)
-    launch(exe, environment=env, args=args)
 
 
 if __name__ == '__main__':
@@ -36,4 +19,24 @@ if __name__ == '__main__':
 
     kwargs, args = parser.parse_known_args()
 
-    launcher(tools=kwargs.tools, executable=kwargs.executable, args=args)
+    # Build environment based on tools
+    tools = kwargs.tools.split(";")
+    tools_env = discover(kwargs.tools.split(";"))
+    env = build(tools_env)
+    env = merge(env, current_env=dict(os.environ))
+
+    # Search for the executable within the tool's environment
+    # by temporarily taking on its `PATH` settings
+    exe = locate(kwargs.executable, env)
+    if not exe:
+        raise ValueError("Unable to find executable: %s" % kwargs.executable)
+
+    print("\n\nLaunching: %s" % exe)
+    try:
+        launch(exe, environment=env, args=args)
+    except Exception as exc:
+        # Ensure we can capture any exception and give the user (and us) time
+        # to read it
+        print(exc)
+        time.sleep(10)
+        sys.exit(1)
