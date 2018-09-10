@@ -147,14 +147,12 @@ def prepare(env, platform_name=None):
     return result
 
 
-def append(env, env_b):
+def join(env, env_b):
     """Append paths of environment b into environment
 
     Returns:
         env (dict)
     """
-    # todo: should this be refactored to "join" or "extend"
-    # todo: this function name might also be confusing with "merge"
     env = env.copy()
     for variable, value in env_b.items():
         for path in value.split(";"):
@@ -225,7 +223,7 @@ def discover(tools, platform_name=None):
             continue
 
         tool_env = prepare(tool_env, platform_name=platform_name)
-        environment = append(environment, tool_env)
+        environment = join(environment, tool_env)
 
     return environment
 

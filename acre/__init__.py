@@ -1,6 +1,6 @@
 from .core import (
     prepare,
-    append,
+    join,
     build,
     merge,
     discover,
@@ -13,7 +13,7 @@ from .core import (
 
 __all__ = [
     "prepare",
-    "append",
+    "join",
     "build",
     "merge",
     "discover",

@@ -148,7 +148,7 @@ class TestDynamicEnvironments(unittest.TestCase):
         _data_a = data_a.copy()
         _data_b = data_b.copy()
 
-        data = acre.append(data_a, data_b)
+        data = acre.join(data_a, data_b)
 
         self.assertEqual(data, {
             "A": "A;A2",
