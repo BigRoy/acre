@@ -128,6 +128,14 @@ def prepare(env, platform_name=None):
 
     platform_name = platform_name or PLATFORM
 
+    lookup = {"windows": ["/", "\\"],
+              "linux": ["\\", "/"],
+              "darwin": ["\\", "/"]}
+
+    translate = lookup.get(platform_name, None)
+    if translate is None:
+        raise KeyError("Given platform name `%s` is not supported" % platform)
+
     result = {}
     for variable, value in env.items():
 
