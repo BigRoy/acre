@@ -14,6 +14,8 @@ PLATFORM = platform.system().lower()
 logging.basicConfig()
 log = logging.getLogger()
 
+re_url = re.compile(r"^\w+://")
+
 
 class CycleError(ValueError):
     """A cyclic dependency in dynamic environment"""
@@ -149,6 +151,11 @@ def prepare(env, platform_name=None):
         # Allow to have lists as values in the tool data
         if isinstance(value, (list, tuple)):
             value = ";".join(value)
+
+        # Replace the separator to match the given platform's separator
+        # Skip any value which is a url; <leader>://<address>
+        if not re_url.match(value):
+            value = value.replace(translate[0], translate[1])
 
         result[variable] = value
 
