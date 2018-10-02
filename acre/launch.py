@@ -28,8 +28,13 @@ if __name__ == '__main__':
     # Search for the executable within the tool's environment
     # by temporarily taking on its `PATH` settings
     exe = locate(kwargs.executable, env)
-    if not exe:
-        raise ValueError("Unable to find executable: %s" % kwargs.executable)
+    try:
+        if not exe:
+            raise ValueError("Unable to find executable: %s" % kwargs.executable)
+    except Exception as exc:
+        print(exc)
+        time.sleep(10)
+        sys.exit(1)
 
     print("\n\nLaunching: %s" % exe)
     try:
