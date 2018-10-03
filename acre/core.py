@@ -3,6 +3,8 @@ import json
 import re
 import os
 import platform
+import subprocess
+import sys
 
 from . import lib
 
@@ -11,6 +13,8 @@ PLATFORM = platform.system().lower()
 
 logging.basicConfig()
 log = logging.getLogger()
+
+re_url = re.compile(r"^\w+://")
 
 
 class CycleError(ValueError):
@@ -23,11 +27,11 @@ class DynamicKeyClashError(ValueError):
     pass
 
 
-def compute(env,
-            dynamic_keys=True,
-            allow_cycle=False,
-            allow_key_clash=False,
-            cleanup=True):
+def build(env,
+          dynamic_keys=True,
+          allow_cycle=False,
+          allow_key_clash=False,
+          cleanup=True):
     """Compute the result from recursive dynamic environment.
 
     Note: Keys that are not present in the data will remain unformatted as the
@@ -110,7 +114,7 @@ def compute(env,
     return env
 
 
-def parse(env, platform_name=None):
+def prepare(env, platform_name=None):
     """Parse environment for platform-specific values
 
     Args:
@@ -126,6 +130,14 @@ def parse(env, platform_name=None):
 
     platform_name = platform_name or PLATFORM
 
+    lookup = {"windows": ["/", "\\"],
+              "linux": ["\\", "/"],
+              "darwin": ["\\", "/"]}
+
+    translate = lookup.get(platform_name, None)
+    if translate is None:
+        raise KeyError("Given platform name `%s` is not supported" % platform)
+
     result = {}
     for variable, value in env.items():
 
@@ -140,15 +152,22 @@ def parse(env, platform_name=None):
         if isinstance(value, (list, tuple)):
             value = ";".join(value)
 
+        # Replace the separator to match the given platform's separator
+        # Skip any value which is a url; <leader>://<address>
+        if not re_url.match(value):
+            value = value.replace(translate[0], translate[1])
+
         result[variable] = value
 
     return result
 
 
-def append(env, env_b):
-    """Append paths of environment b into environment"""
-    # todo: should this be refactored to "join" or "extend"
-    # todo: this function name might also be confusing with "merge"
+def join(env, env_b):
+    """Append paths of environment b into environment
+
+    Returns:
+        env (dict)
+    """
     env = env.copy()
     for variable, value in env_b.items():
         for path in value.split(";"):
@@ -160,17 +179,17 @@ def append(env, env_b):
     return env
 
 
-def get_tools(tools, platform_name=None):
+def discover(tools, platform_name=None):
     """Return combined environment for the given set of tools.
 
-    This will find merge all the required environment variables of the input
-    tools into a single dictionary. Then it will do a recursive format to
+    This will find and merge all the required environment variables of the
+    input tools into a single dictionary. Then it will do a recursive format to
     format all dynamic keys and values using the same dictionary. (So that
     tool X can rely on variables of tool Y).
 
     Examples:
-        get_environment(["maya2018", "yeti2.01", "mtoa2018"])
-        get_environment(["global", "fusion9", "ofxplugins"])
+        get_tools(["maya2018", "yeti2.01", "mtoa2018"])
+        get_tools(["global", "fusion9", "ofxplugins"])
 
     Args:
         tools (list): List of tool names.
@@ -201,25 +220,25 @@ def get_tools(tools, platform_name=None):
     environment = dict()
     for tool_path in tool_paths:
 
-        # Load tool
+        # Load tool environment
         try:
             with open(tool_path, "r") as f:
                 tool_env = json.load(f)
             log.debug('Read tool successfully: {}'.format(tool_path))
         except IOError:
-            log.debug(
+            log.error(
                 'Unable to find the environment file: "{}"'.format(tool_path)
             )
             continue
         except ValueError as e:
-            log.debug(
+            log.error(
                 'Unable to read the environment file: "{0}", due to:'
                 '\n{1}'.format(tool_path, e)
             )
             continue
 
-        tool_env = parse(tool_env, platform_name=platform_name)
-        environment = append(environment, tool_env)
+        tool_env = prepare(tool_env, platform_name=platform_name)
+        environment = join(environment, tool_env)
 
     return environment
 
@@ -249,3 +268,93 @@ def merge(env, current_env):
 
     return result
 
+
+def locate(program, env):
+    """Locate `program` in PATH
+
+    Ensure `PATHEXT` is declared in the environment if you want to alter the
+    priority of the system extensions:
+
+        Example : ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
+
+    Arguments:
+        program (str): Name of program, e.g. "python"
+        env (dict): an environment dictionary
+
+    """
+
+    def is_exe(fpath):
+        if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+            return True
+        return False
+
+    paths = env["PATH"].split(os.pathsep)
+    extensions = env.get("PATHEXT", os.getenv("PATHEXT", ""))
+
+    for path in paths:
+        for ext in extensions.split(os.pathsep):
+            fname = program + ext.lower()
+            abspath = os.path.join(path.strip('"'), fname)
+            if is_exe(abspath):
+                return abspath
+
+    return None
+
+
+def launch(executable, args=None, environment=None, cwd=None):
+    """Launch a new subprocess of `args`
+
+    Arguments:
+        executable (str): Relative or absolute path to executable
+        args (list): Command passed to `subprocess.Popen`
+        environment (dict, optional): Custom environment passed
+            to Popen instance.
+        cwd (str): the current working directory
+
+    Returns:
+        Popen instance of newly spawned process
+
+    Exceptions:
+        OSError on internal error
+        ValueError on `executable` not found
+
+    """
+
+    CREATE_NO_WINDOW = 0x08000000
+    CREATE_NEW_CONSOLE = 0x00000010
+    IS_WIN32 = sys.platform == "win32"
+    PY2 = sys.version_info[0] == 2
+
+    abspath = executable
+
+    env = (environment or os.environ)
+
+    if PY2:
+        # Protect against unicode, and other unsupported
+        # types amongst environment variables
+        enc = sys.getfilesystemencoding()
+        env = {k.encode(enc): v.encode(enc) for k, v in env.items()}
+
+    kwargs = dict(
+        args=[abspath] + args or list(),
+        env=env,
+        cwd=cwd,
+
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+
+        # Output `str` through stdout on Python 2 and 3
+        universal_newlines=True,
+    )
+
+    if env.get("CREATE_NEW_CONSOLE"):
+        kwargs["creationflags"] = CREATE_NEW_CONSOLE
+        kwargs.pop("stdout")
+        kwargs.pop("stderr")
+    else:
+        if IS_WIN32:
+            kwargs["creationflags"] = CREATE_NO_WINDOW
+
+    popen = subprocess.Popen(**kwargs)
+
+    return popen

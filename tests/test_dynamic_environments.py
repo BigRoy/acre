@@ -17,15 +17,15 @@ class TestDynamicEnvironments(unittest.TestCase):
             "B": "universal"
         }
 
-        result = acre.parse(data, platform_name="darwin")
+        result = acre.prepare(data, platform_name="darwin")
         self.assertEqual(result["A"], data["A"]["darwin"])
         self.assertEqual(result["B"], data["B"])
 
-        result = acre.parse(data, platform_name="windows")
+        result = acre.prepare(data, platform_name="windows")
         self.assertEqual(result["A"], data["A"]["windows"])
         self.assertEqual(result["B"], data["B"])
 
-        result = acre.parse(data, platform_name="linux")
+        result = acre.prepare(data, platform_name="linux")
         self.assertEqual(result["A"], data["A"]["linux"])
         self.assertEqual(result["B"], data["B"])
 
@@ -44,7 +44,7 @@ class TestDynamicEnvironments(unittest.TestCase):
             "I": "deep_{H}"
         }
 
-        result = acre.compute(data)
+        result = acre.build(data)
 
         self.assertEqual(result, {
             "A": "bla",
@@ -66,11 +66,11 @@ class TestDynamicEnvironments(unittest.TestCase):
         }
 
         with self.assertRaises(acre.CycleError):
-            acre.compute(data, allow_cycle=False)
+            acre.build(data, allow_cycle=False)
 
         # If we compute the cycle the result is unknown, it can be either {Y}
         # or {X} for both values so we just check whether are equal
-        result = acre.compute(data, allow_cycle=True)
+        result = acre.build(data, allow_cycle=True)
         self.assertEqual(result["X"], result["Y"])
 
     def test_dynamic_keys(self):
@@ -82,7 +82,7 @@ class TestDynamicEnvironments(unittest.TestCase):
             "{B}": "this is C"
         }
 
-        env = acre.compute(data)
+        env = acre.build(data)
 
         self.assertEqual(env, {
           "A": "D",
@@ -99,10 +99,10 @@ class TestDynamicEnvironments(unittest.TestCase):
         }
 
         with self.assertRaises(acre.DynamicKeyClashError):
-            acre.compute(data, allow_key_clash=False)
+            acre.build(data, allow_key_clash=False)
 
         # Allow to pass (even if unpredictable result)
-        acre.compute(data, allow_key_clash=True)
+        acre.build(data, allow_key_clash=True)
 
     def test_dynamic_keys_clash(self):
         """Dynamic key clash captured correctly"""
@@ -113,10 +113,10 @@ class TestDynamicEnvironments(unittest.TestCase):
         }
 
         with self.assertRaises(acre.DynamicKeyClashError):
-            acre.compute(data, allow_key_clash=False)
+            acre.build(data, allow_key_clash=False)
 
         # Allow to pass (even if unpredictable result)
-        acre.compute(data, allow_key_clash=True)
+        acre.build(data, allow_key_clash=True)
 
     def test_compute_preserve_reference_to_self(self):
         """acre.compute() does not format key references to itself"""
@@ -125,7 +125,7 @@ class TestDynamicEnvironments(unittest.TestCase):
             "PATH": "{PATH}",
             "PYTHONPATH": "x;y/{PYTHONPATH}"
         }
-        data = acre.compute(data)
+        data = acre.build(data)
         self.assertEqual(data, {
             "PATH": "{PATH}",
             "PYTHONPATH": "x;y/{PYTHONPATH}"
@@ -148,7 +148,7 @@ class TestDynamicEnvironments(unittest.TestCase):
         _data_a = data_a.copy()
         _data_b = data_b.copy()
 
-        data = acre.append(data_a, data_b)
+        data = acre.join(data_a, data_b)
 
         self.assertEqual(data, {
             "A": "A;A2",
