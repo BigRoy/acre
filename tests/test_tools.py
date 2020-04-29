@@ -52,4 +52,3 @@ class TestTools(unittest.TestCase):
         env = acre.compute(env)
         self.assertEqual(env["MAYA_LOCATION"],
                          "C:/Program Files/Autodesk/Maya2018")
-

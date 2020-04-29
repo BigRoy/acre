@@ -14,13 +14,43 @@ log = logging.getLogger()
 
 
 class CycleError(ValueError):
-    """A cyclic dependency in dynamic environment"""
+    """A cyclic dependency in dynamic environment."""
+
     pass
 
 
 class DynamicKeyClashError(ValueError):
-    """A dynamic key clash on compute"""
+    """A dynamic key clash on compute."""
+
     pass
+
+
+def _is_path(path):
+    """Guess if given string is path.
+
+    This works very simple by detecting `os.path.pathsep` at least once. This
+    approach is obviously not bulletproof as it will leave strings like
+    'filename' out. But this is used in environment cleanup and it should
+    be sufficient enough.
+
+    Arguments:
+        path (str): string to check
+        platform_name (str): platform we are using for check
+
+    Returns:
+        bool
+
+    Note:
+        We are allowing forward slash in Windows paths as it ease writing
+        paths into json files and increase readability.
+
+    """
+    if platform.system().lower() == "windows":
+        path = path.replace("\\", "/")
+
+    if len(path.split("/")) > 1:
+        return True
+    return False
 
 
 def compute(env,
@@ -98,11 +128,27 @@ def compute(env,
         for key, value in env.items():
             paths = value.split(separator)
 
-            # Keep unique path entries: {A};{A};{B} -> {A};{B}
-            paths = lib.uniqify_ordered(paths)
-
             # Remove empty values
             paths = [p for p in paths if p.strip()]
+
+            # test if environment variable can contain path and  if so do
+            # the cleanup. This is because on some platform path separator
+            # character can be used on variables the actually are not paths
+            # and shouldn't be touched at all. Good example of one such
+            # variable is `DISPLAY` on linux. That typically for desktop
+            # has value like `:0.0`. It is unfortunate that this variable
+            # can sometime has value like `hostname/unix:0.0` and in that case
+            # this check will fail.
+            are_paths = True
+            for p in paths:
+                if not _is_path(p):
+                    are_paths = False
+                    break
+            if not are_paths:
+                continue
+
+            # Keep unique path entries: {A};{A};{B} -> {A};{B}
+            paths = lib.uniqify_ordered(paths)
 
             value = separator.join(paths)
             env[key] = value
@@ -111,7 +157,7 @@ def compute(env,
 
 
 def parse(env, platform_name=None):
-    """Parse environment for platform-specific values
+    """Parse environment for platform-specific values.
 
     Args:
         env (dict): The source environment to read.
@@ -123,8 +169,7 @@ def parse(env, platform_name=None):
         dict: The flattened environment for a platform.
 
     """
-
-    platform_name = platform_name or PLATFORM
+    platform_name = platform_name or platform.system().lower()
 
     result = {}
     for variable, value in env.items():
@@ -146,12 +191,12 @@ def parse(env, platform_name=None):
 
 
 def append(env, env_b):
-    """Append paths of environment b into environment"""
+    """Append paths of environment b into environment."""
     # todo: should this be refactored to "join" or "extend"
     # todo: this function name might also be confusing with "merge"
     env = env.copy()
     for variable, value in env_b.items():
-        for path in value.split(";"):
+        for path in value.split(os.pathsep):
             if not path:
                 continue
 
@@ -182,7 +227,6 @@ def get_tools(tools, platform_name=None):
         dict: The environment required for the tools.
 
     """
-
     try:
         env_paths = os.environ['TOOL_ENV'].split(os.pathsep)
     except KeyError:
@@ -241,11 +285,9 @@ def merge(env, current_env):
         dict: The resulting environment after the merge.
 
     """
-
     result = current_env.copy()
     for key, value in env.items():
         value = lib.partial_format(value, data=current_env, missing="")
         result[key] = value
 
     return result
-
