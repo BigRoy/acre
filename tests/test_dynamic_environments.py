@@ -131,6 +131,22 @@ class TestDynamicEnvironments(unittest.TestCase):
             "PYTHONPATH": "x;y/{PYTHONPATH}"
         })
 
+    def test_compute_reference_formats(self):
+        """acre.compute() will correctly skip unresolved references."""
+        data = {
+            "A": "a",
+            "B": "{A},b",
+            "C": "{C}",
+            "D": "{D[x]}",
+        }
+        data = acre.compute(data)
+        self.assertEqual(data, {
+            "A": "a",
+            "B": "a,b",
+            "C": "{C}",
+            "D": "{D[x]}"
+        })
+
     def test_append(self):
         """Append paths of two environments into one."""
 
