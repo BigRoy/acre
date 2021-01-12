@@ -1,4 +1,5 @@
 import os
+import re
 import string
 
 from collections import defaultdict, namedtuple
@@ -43,7 +44,18 @@ def partial_format(s, data, missing="{{{key}}}"):
 
     formatter = string.Formatter()
     mapping = FormatDict(**data)
-    return formatter.vformat(s, (), mapping)
+    try:
+        f = formatter.vformat(s, (), mapping)
+    except Exception:
+        r_token = re.compile(r"({.*?})")
+        matches = re.findall(r_token, s)
+        f = s
+        for m in matches:
+            try:
+                f = re.sub(m, m.format(**data), f)
+            except KeyError:
+                continue
+    return f
 
 
 def topological_sort(dependency_pairs):
