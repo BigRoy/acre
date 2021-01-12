@@ -9,7 +9,7 @@ license = "LGPLv3"
 readme =" README.md"
 python = "^2.7"
 homepage = "https://github.com/BigRoy/acre"
-repository = "https://github.com/BigRoy/acre
+repository = "https://github.com/BigRoy/acre"
 documentation = "https://github.com/BigRoy/acre"
 
 keywords = ["environment", "pipeline"]
