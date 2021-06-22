@@ -85,6 +85,7 @@ def append_path(self, key, path):
     """Append *path* to *key* in *self*."""
 
     try:
-        self[key] = os.pathsep.join([self[key], str(path)])
+        if path not in self[key].split(os.pathsep):
+            self[key] = os.pathsep.join([self[key], str(path)])
     except KeyError:
         self[key] = str(path)
