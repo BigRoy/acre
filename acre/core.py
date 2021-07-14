@@ -257,21 +257,6 @@ def merge(env, current_env):
         dict: The resulting environment after the merge.
 
     """
-    def _path_formating(string):
-        string = str(string)
-        frward = re.compile(r'^//').search(string)
-        bckwrd = re.compile(r'^\\').search(string)
-        url = re.compile(r'://').search(string)
-
-        if frward:
-            return os.path.normpath(string)
-        elif bckwrd:
-            return string
-        elif url:
-            return string
-        else:
-            return os.path.normpath(string)
-
     result = current_env.copy()
     for key, value in env.items():
         if not isinstance(value, str):
@@ -279,8 +264,17 @@ def merge(env, current_env):
             continue
         value = lib.partial_format(value, data=current_env, missing="")
 
-        value = _path_formating(value)
+        value = str(value)
+        bckwrd = re.compile(r'^\\').search(value)
+        url = re.compile(r'://').search(value)
 
-        lib.append_path(result, key, value)
+        if url:
+            result[key] = value
+            continue
+
+        if not bckwrd:
+            value = os.path.normpath(value)
+
+        lib.append_path(result, key, os.path.normpath(value))
 
     return result
