@@ -266,17 +266,6 @@ def merge(env, current_env, missing=None):
             continue
         value = lib.partial_format(value, data=current_env, missing=missing)
 
-        value = str(value)
-        bckwrd = re.compile(r'^\\').search(value)
-        url = re.compile(r'://').search(value)
-
-        if url:
-            result[key] = value
-            continue
-
-        if not bckwrd:
-            value = os.path.normpath(value)
-
-        lib.append_path(result, key, os.path.normpath(value))
+        result[key] = str(value)
 
     return result
