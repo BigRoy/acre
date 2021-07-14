@@ -262,8 +262,8 @@ def merge(env, current_env, missing=None):
     result = current_env.copy()
     for key, value in env.items():
         if not isinstance(value, str):
-            result[key] = str(value)
-            continue
+            value = str(value)
+
         value = lib.partial_format(value, data=current_env, missing=missing)
 
         result[key] = str(value)
