@@ -81,11 +81,12 @@ def topological_sort(dependency_pairs):
     return Results(ordered, cyclic)
 
 
-def append_path(self, key, path):
-    """Append *path* to *key* in *self*."""
+def append_path(env, key, path):
+    """Append *path* to *key* in *env*."""
 
-    try:
-        if path not in self[key].split(os.pathsep):
-            self[key] = os.pathsep.join([self[key], str(path)])
-    except KeyError:
-        self[key] = str(path)
+    orig_value = env.get(key)
+    if not orig_value:
+        env[key] = str(path)
+
+    elif path not in orig_value.split(os.pathsep):
+        env[key] = os.pathsep.join([orig_value, str(path)])
