@@ -240,7 +240,7 @@ def get_tools(tools, platform_name=None):
     return environment
 
 
-def merge(env, current_env):
+def merge(env, current_env, missing=None):
     """Merge the tools environment with the 'current_env'.
 
     This finalizes the join with a current environment by formatting the
@@ -252,6 +252,8 @@ def merge(env, current_env):
         env (dict): The dynamic environment
         current_env (dict): The "current environment" to merge the dynamic
             environment into.
+        missing (str): Argument passed to 'partial_format' during merging.
+            `None` should keep missing keys unchanged.
 
     Returns:
         dict: The resulting environment after the merge.
@@ -260,21 +262,10 @@ def merge(env, current_env):
     result = current_env.copy()
     for key, value in env.items():
         if not isinstance(value, str):
-            result[key] = str(value)
-            continue
-        value = lib.partial_format(value, data=current_env, missing="")
+            value = str(value)
 
-        value = str(value)
-        bckwrd = re.compile(r'^\\').search(value)
-        url = re.compile(r'://').search(value)
+        value = lib.partial_format(value, data=current_env, missing=missing)
 
-        if url:
-            result[key] = value
-            continue
-
-        if not bckwrd:
-            value = os.path.normpath(value)
-
-        lib.append_path(result, key, os.path.normpath(value))
+        result[key] = str(value)
 
     return result
