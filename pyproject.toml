@@ -1,11 +1,11 @@
 [project]
 name = "acre"
-version = "1.0.0"
+version = "1.0.1"
 description = "Lightweight cross-platform environment management Python package that makes it trivial to launch applications in their own configurable working environment."
 authors = [
     "Roy Nieterau <roy_nieterau@hotmail.com>"
 ]
-license = "LGPLv3"
+license = "LGPL-3.0-only"
 readme =" README.md"
 python = "^2.7"
 homepage = "https://github.com/BigRoy/acre"
