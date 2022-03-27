@@ -5,7 +5,7 @@ description = "Lightweight cross-platform environment management Python package 
 authors = [
     "Roy Nieterau <roy_nieterau@hotmail.com>"
 ]
-license = "LGPL-3.0-only"
+license.text = "LGPL-3.0-only"
 readme =" README.md"
 python = "^2.7"
 homepage = "https://github.com/BigRoy/acre"
