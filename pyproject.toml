@@ -1,4 +1,5 @@
 [project]
+version = "1.0.0"
 name = "acre"
 description = "Lightweight cross-platform environment management Python package that makes it trivial to launch applications in their own configurable working environment."
 readme = "README.md"
