@@ -1,13 +1,12 @@
 [project]
 name = "acre"
-version = "1.0.1"
 description = "Lightweight cross-platform environment management Python package that makes it trivial to launch applications in their own configurable working environment."
+readme = "README.md"
 authors = [
     { name = "Roy Nieterau", email ="roy_nieterau@hotmail.com" },
 ]
 license = { file = "LICENSE" }
-readme =" README.md"
-python = "^2.7"
+requires-python = ">=2.7"
 keywords = ["environment", "pipeline"]
 
 classifiers = [
