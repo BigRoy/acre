@@ -3,15 +3,11 @@ name = "acre"
 version = "1.0.1"
 description = "Lightweight cross-platform environment management Python package that makes it trivial to launch applications in their own configurable working environment."
 authors = [
-    "Roy Nieterau <roy_nieterau@hotmail.com>"
+    { name = "Roy Nieterau", email ="roy_nieterau@hotmail.com" },
 ]
-license.text = "LGPL-3.0-only"
+license = { file = "LICENSE" }
 readme =" README.md"
 python = "^2.7"
-homepage = "https://github.com/BigRoy/acre"
-repository = "https://github.com/BigRoy/acre"
-documentation = "https://github.com/BigRoy/acre"
-
 keywords = ["environment", "pipeline"]
 
 classifiers = [
@@ -20,6 +16,11 @@ classifiers = [
   "Intended Audience :: Developers",
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
+
+[project.urls]
+homepage = "https://github.com/BigRoy/acre"
+repository = "https://github.com/BigRoy/acre"
+documentation = "https://github.com/BigRoy/acre"
 
 [build-system]
 requires = ["setuptools >= 35.0.2", "wheel"]
