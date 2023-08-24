@@ -10,7 +10,7 @@ from . import lib
 PLATFORM = platform.system().lower()
 
 logging.basicConfig()
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class CycleError(ValueError):
@@ -44,14 +44,17 @@ def compute(env,
     # Collect dependencies
     dependencies = []
     for key, value in env.items():
-        dependent_keys = re.findall("{(.+?)}", value)
-        for dependency in dependent_keys:
-            # Ignore direct references to itself because
-            # we don't format with itself anyway
-            if dependency == key:
-                continue
+        try:
+            dependent_keys = re.findall("{(.+?)}", value)
+            for dependency in dependent_keys:
+                # Ignore direct references to itself because
+                # we don't format with itself anyway
+                if dependency == key:
+                    continue
 
-            dependencies.append((key, dependency))
+                dependencies.append((key, dependency))
+        except Exception:
+            dependencies.append((key, value))
 
     result = lib.topological_sort(dependencies)
 
@@ -66,6 +69,8 @@ def compute(env,
     # Format dynamic values
     for key in reversed(result.sorted):
         if key in env:
+            if not isinstance(env[key], str):
+                continue
             data = env.copy()
             data.pop(key)    # format without itself
             env[key] = lib.partial_format(env[key], data=data)
@@ -73,6 +78,8 @@ def compute(env,
     # Format cyclic values
     for key in result.cyclic:
         if key in env:
+            if not isinstance(env[key], str):
+                continue
             data = env.copy()
             data.pop(key)   # format without itself
             env[key] = lib.partial_format(env[key], data=data)
@@ -81,8 +88,12 @@ def compute(env,
     if dynamic_keys:
         formatted = {}
         for key, value in env.items():
-            new_key = lib.partial_format(key, data=env)
+            if not isinstance(value, str):
+                new_key = key
+                formatted[key] = value
+                continue
 
+            new_key = lib.partial_format(key, data=env)
             if new_key in formatted:
                 if not allow_key_clash:
                     raise DynamicKeyClashError("Key clashes on: {0} "
@@ -96,6 +107,8 @@ def compute(env,
     if cleanup:
         separator = os.pathsep
         for key, value in env.items():
+            if not isinstance(value, str):
+                continue
             paths = value.split(separator)
 
             # Keep unique path entries: {A};{A};{B} -> {A};{B}
@@ -138,7 +151,7 @@ def parse(env, platform_name=None):
 
         # Allow to have lists as values in the tool data
         if isinstance(value, (list, tuple)):
-            value = ";".join(value)
+            value = os.pathsep.join(value)
 
         result[variable] = value
 
@@ -151,12 +164,14 @@ def append(env, env_b):
     # todo: this function name might also be confusing with "merge"
     env = env.copy()
     for variable, value in env_b.items():
-        for path in value.split(";"):
-            if not path:
-                continue
-
-            lib.append_path(env, variable, path)
-
+        try:
+            for path in value.split(os.pathsep):
+                if not path:
+                    continue
+                lib.append_path(env, variable, path)
+        except Exception:
+            if not isinstance(value, str):
+                env[variable] = value
     return env
 
 
@@ -190,7 +205,7 @@ def get_tools(tools, platform_name=None):
             '"TOOL_ENV" environment variable not found. '
             'Please create it and point it to a folder with your .json '
             'config files.'
-         )
+        )
 
     # Collect the tool files to load
     tool_paths = []
@@ -219,12 +234,13 @@ def get_tools(tools, platform_name=None):
             continue
 
         tool_env = parse(tool_env, platform_name=platform_name)
+
         environment = append(environment, tool_env)
 
     return environment
 
 
-def merge(env, current_env):
+def merge(env, current_env, missing=None):
     """Merge the tools environment with the 'current_env'.
 
     This finalizes the join with a current environment by formatting the
@@ -236,16 +252,20 @@ def merge(env, current_env):
         env (dict): The dynamic environment
         current_env (dict): The "current environment" to merge the dynamic
             environment into.
+        missing (str): Argument passed to 'partial_format' during merging.
+            `None` should keep missing keys unchanged.
 
     Returns:
         dict: The resulting environment after the merge.
 
     """
-
     result = current_env.copy()
     for key, value in env.items():
-        value = lib.partial_format(value, data=current_env, missing="")
-        result[key] = value
+        if not isinstance(value, str):
+            value = str(value)
+
+        value = lib.partial_format(value, data=current_env, missing=missing)
+
+        result[key] = str(value)
 
     return result
-

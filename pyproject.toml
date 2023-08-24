@@ -1,0 +1,27 @@
+[project]
+version = "1.0.0"
+name = "acre"
+description = "Lightweight cross-platform environment management Python package that makes it trivial to launch applications in their own configurable working environment."
+readme = "README.md"
+authors = [
+    { name = "Roy Nieterau", email ="roy_nieterau@hotmail.com" },
+]
+license = { file = "LICENSE" }
+requires-python = ">=2.7"
+keywords = ["environment", "pipeline"]
+
+classifiers = [
+  "Topic :: Software Development",
+  "Topic :: Utilities",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[project.urls]
+homepage = "https://github.com/BigRoy/acre"
+repository = "https://github.com/BigRoy/acre"
+documentation = "https://github.com/BigRoy/acre"
+
+[build-system]
+requires = ["setuptools >= 35.0.2", "wheel"]
+build-backend = "setuptools.build_meta"

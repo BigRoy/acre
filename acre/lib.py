@@ -1,4 +1,5 @@
 import os
+import re
 import string
 
 from collections import defaultdict, namedtuple
@@ -37,12 +38,24 @@ def partial_format(s, data, missing="{{{key}}}"):
         Missing keys are replaced with the return value of __missing__.
 
         """
+
         def __missing__(self, key):
             return missing.format(key=key)
 
     formatter = string.Formatter()
     mapping = FormatDict(**data)
-    return formatter.vformat(s, (), mapping)
+    try:
+        f = formatter.vformat(s, (), mapping)
+    except Exception:
+        r_token = re.compile(r"({.*?})")
+        matches = re.findall(r_token, s)
+        f = s
+        for m in matches:
+            try:
+                f = re.sub(m, m.format(**data), f)
+            except (KeyError, ValueError):
+                continue
+    return f
 
 
 def topological_sort(dependency_pairs):
@@ -68,10 +81,12 @@ def topological_sort(dependency_pairs):
     return Results(ordered, cyclic)
 
 
-def append_path(self, key, path):
-    """Append *path* to *key* in *self*."""
-    try:
-        if path not in self[key]:
-            self[key] = os.pathsep.join([self[key], str(path)])
-    except KeyError:
-        self[key] = str(path)
+def append_path(env, key, path):
+    """Append *path* to *key* in *env*."""
+
+    orig_value = env.get(key)
+    if not orig_value:
+        env[key] = str(path)
+
+    elif path not in orig_value.split(os.pathsep):
+        env[key] = os.pathsep.join([orig_value, str(path)])
