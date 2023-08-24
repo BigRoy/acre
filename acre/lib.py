@@ -53,7 +53,7 @@ def partial_format(s, data, missing="{{{key}}}"):
         for m in matches:
             try:
                 f = re.sub(m, m.format(**data), f)
-            except KeyError:
+            except (KeyError, ValueError):
                 continue
     return f
 
